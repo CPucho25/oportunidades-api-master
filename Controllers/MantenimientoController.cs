@@ -1778,8 +1778,8 @@ namespace BF.Controllers
                 var boolDupReg = true;
                 //Entidad op_r_socgercli
                 var reasignacion = new Models.OpRSocgercli();
-                //Lista de servicios
-                var listServicios = _context.OpMServicio.Select(l => l.Id).ToList();
+                //Lista de servicios (se modifico y agregó codigo duro del area BTC = 1, en algun momento se tendrá que modificar para diferentes areas)
+                var listServicios = _context.OpMServicio.Where(k => k.IdArea == 1 && k.FlgActivo == 1).Select(l => l.Id).ToList();
                 //Lista de subservicios
                 var listSubServicios = new List<DTOLista>();
                 //Nueva relación
@@ -1838,6 +1838,14 @@ namespace BF.Controllers
 
                                     boolDupReg = false;
                                 }
+                                else
+                                {
+
+                                    reasignacion.FlgActivo = 1;
+
+                                    _context.OpRSocGerCli.Update(reasignacion);
+                                    _context.SaveChanges();
+                                }
                             };
 
                             break;
@@ -1888,6 +1896,14 @@ namespace BF.Controllers
 
                                     boolDupReg = false;
                                 }
+                                else
+                                {
+
+                                    reasignacion.FlgActivo = 1;
+
+                                    _context.OpRSocGerCli.Update(reasignacion);
+                                    _context.SaveChanges();
+                                }
                             };
 
                             break;
@@ -1937,6 +1953,14 @@ namespace BF.Controllers
                                     _context.SaveChanges();
 
                                     boolDupReg = false;
+                                }
+                                else
+                                {
+                                    
+                                    reasignacion.FlgActivo = 1;
+
+                                    _context.OpRSocGerCli.Update(reasignacion);
+                                    _context.SaveChanges();
                                 }
                             };
 
@@ -1989,7 +2013,15 @@ namespace BF.Controllers
                 //Bool nuevos registros
                 var boolNewReg = false;
 
+                List<int> servicios = new List<int>();
+                var listaElementoEliminar = new List<OpRSocgercli>(); 
+
+
+
+
                 foreach (DTORelacionServicio serv in listaServicio) {
+                    servicios.Add( serv.Value);
+
                     switch (serv.Value) {
                         //ASESORÍA FISCALIZACIÓN
                         case 13:
@@ -2073,16 +2105,18 @@ namespace BF.Controllers
                             break;
                         //OTROS SERVICIOS
                         default:
-                            //Validamos si existen registros previos con las nuevas llaves ingresadas
+                            //Validamos si existen registros previos con las nuevas llaves ingresadas(si no exite nueva relacion será igual a NULL)
                             newRelEntity = _context.OpRSocGerCli.FirstOrDefault(item => item.IdPeriodo == dto.IdPeriodo && item.IdSocio == dto.IdSocio
                                                                                && item.IdGerente == dto.IdGerente && item.IdEmpresa == dto.IdEmpresa
                                                                                && item.IdServicio == serv.Value);
+                            
+                            //Nuevo servicio que se agrego en la pantalla y gerente nuevo
                             if (newRelEntity == null)
                             {
-                                //Realizamos la búsqueda del ID a editar
+                                //Realizamos la búsqueda del ID a editar en gerente antiguo
                                 entity = _context.OpRSocGerCli.FirstOrDefault(item => item.IdPeriodo == serv.IdPeriodo && item.IdSocio == serv.IdSocio
-                                                                                && item.IdGerente == serv.IdGerente && item.IdEmpresa == serv.IdEmpresa
-                                                                                && item.IdServicio == serv.Value);
+                                                                               && item.IdGerente == serv.IdGerente && item.IdEmpresa == serv.IdEmpresa
+                                                                               && item.IdServicio == serv.Value);
                                 if (entity != null)
                                 {
                                     entity.IdPeriodo = dto.IdPeriodo;
@@ -2107,12 +2141,13 @@ namespace BF.Controllers
                                 entity = _context.OpRSocGerCli.FirstOrDefault(item => item.IdPeriodo == dto.IdPeriodo && item.IdSocio == dto.IdSocio
                                                                                && item.IdGerente == dto.IdGerente && item.IdEmpresa == dto.IdEmpresa
                                                                                && item.IdServicio == serv.Value);
+                               
                                 if (entity != null)
                                 {
-                                    entity.IdPeriodo = dto.IdPeriodo;
+                                    /*entity.IdPeriodo = dto.IdPeriodo;
                                     entity.IdSocio = dto.IdSocio;
                                     entity.IdGerente = dto.IdGerente;
-                                    entity.IdEmpresa = dto.IdEmpresa;
+                                    entity.IdEmpresa = dto.IdEmpresa;*/
                                     entity.UsuModificacion = dto.UsuModificacion;
                                     entity.FecModificacion = dto.FecModificacion;
                                     entity.FlgActivo = dto.FlgActivo;
@@ -2123,25 +2158,113 @@ namespace BF.Controllers
                                     boolRegDup = false;
 
                                     //Ahora cambiando el flag a los demás registros pero que tiene otros 'gerentes'
-                                    entity = _context.OpRSocGerCli.FirstOrDefault(item => item.IdPeriodo == dto.IdPeriodo && item.IdSocio == dto.IdSocio
+                                    /*entity = _context.OpRSocGerCli.FirstOrDefault(item => item.IdPeriodo == dto.IdPeriodo && item.IdSocio == dto.IdSocio
                                                                                    && item.IdGerente != dto.IdGerente && item.IdEmpresa == dto.IdEmpresa
+                                                                                   && item.IdServicio == serv.Value);*/
+
+                                    entity = _context.OpRSocGerCli.FirstOrDefault(item => item.IdPeriodo == dto.IdPeriodo && item.IdSocio == dto.IdSocio
+                                                                                   && item.IdGerente == serv.IdGerente && item.IdEmpresa == dto.IdEmpresa
                                                                                    && item.IdServicio == serv.Value);
-                                    //Cambiando su estado
-                                    entity.FlgActivo = 0;//dto.FlgActivo
-                                    _context.OpRSocGerCli.Update(entity);
-                                    _context.SaveChanges();
-                                }
+
+                                    if (entity != null) {
+                                        //Cambiando su estado
+                                        entity.FlgActivo = 0;//dto.FlgActivo
+                                        _context.OpRSocGerCli.Update(entity);
+                                        _context.SaveChanges();
+                                    }
+                                    
+
+
+                                }   
                                 else
                                     boolNewReg = true;
-
                             }
-
 
                             break;
                     }
                 };
 
-                if(!boolRegDup && !boolNewReg)
+                //Se obtiene la lista de servicios que se envía desde la reasignación
+                //if(listaServicio.Count > 0)
+                //{
+                //Se obtiene la lista de servicios que tiene el manager actual diferentes a la lista de servicios recibidos como parametro
+                /*var listaEliminar = _context.OpRSocGerCli.Where(item => item.IdPeriodo == listaServicio[0].IdPeriodo && item.IdSocio == listaServicio[0].IdSocio
+                                                                                    && item.IdGerente == listaServicio[0].IdGerente && item.IdEmpresa == listaServicio[0].IdEmpresa
+                                                                                    && servicios.Any(i1 => i1 != item.IdServicio)).Select(o => new OpRSocgercli
+                                                                                    {
+                                                                                        Id = o.Id,
+                                                                                        IdServicio = o.IdServicio,
+                                                                                        IdSubservicio = o.IdSubservicio,
+                                                                                        IdGerente = o.IdGerente,
+                                                                                        IdSocio = o.IdSocio,
+                                                                                        IdPeriodo = o.IdPeriodo,
+                                                                                        UsuModificacion = o.UsuModificacion,
+                                                                                        FecModificacion = o.FecModificacion,
+                                                                                        UsuCreacion = o.UsuCreacion,
+                                                                                        FecCreacion = o.FecCreacion,
+                                                                                        FlgActivo = o.FlgActivo
+
+                                                                                    }).ToList();*/
+                var listaEliminar = _context.OpRSocGerCli.Where(item => item.IdPeriodo == listaServicio[0].IdPeriodo && item.IdSocio == listaServicio[0].IdSocio
+                                                                                    && item.IdGerente == listaServicio[0].IdGerente && item.IdEmpresa == listaServicio[0].IdEmpresa 
+                                                                                    ).Select(o => new OpRSocgercli
+                                                                                    {
+                                                                                        Id = o.Id,
+                                                                                        IdServicio = o.IdServicio,
+                                                                                        IdSubservicio = o.IdSubservicio,
+                                                                                        IdGerente = o.IdGerente,
+                                                                                        IdSocio = o.IdSocio,
+                                                                                        IdPeriodo = o.IdPeriodo,
+                                                                                        IdEmpresa = o.IdEmpresa,
+                                                                                        UsuModificacion = o.UsuModificacion,
+                                                                                        FecModificacion = o.FecModificacion,
+                                                                                        UsuCreacion = o.UsuCreacion,
+                                                                                        FecCreacion = o.FecCreacion,
+                                                                                        FlgActivo = o.FlgActivo
+
+                                                                                    }).ToList();
+
+
+                //Recorre todos los servicios que tiene el manager antiguo y los inactiva ( esta caso cuando se elimina servicios al manager actual o se reasigna a nuevo manager y los servicios del manager actual se inactivan) 
+
+                foreach (OpRSocgercli itemEliminar in listaEliminar)
+                {
+                     
+                 
+                    if (servicios.Contains(int.Parse( itemEliminar.IdServicio.ToString() )) == false)
+                    {
+
+                        /*newRelEntity = _context.OpRSocGerCli.FirstOrDefault(item => item.IdPeriodo == itemEliminar.IdPeriodo && item.IdSocio == itemEliminar.IdSocio
+                                                                             && item.IdGerente == itemEliminar.IdGerente && item.IdEmpresa == itemEliminar.IdEmpresa
+                                                                             && item.IdServicio == itemEliminar.IdServicio && item.IdSubservicio == itemEliminar.IdSubservicio);*/
+
+
+                        newRelEntity = _context.OpRSocGerCli.FirstOrDefault(item => item.Id == itemEliminar.Id );
+
+
+                        newRelEntity.FlgActivo = 0;
+                        _context.OpRSocGerCli.Update(newRelEntity);
+                        _context.SaveChanges();
+
+                    }
+                    else
+                    {
+
+                        newRelEntity = _context.OpRSocGerCli.FirstOrDefault(item => item.Id == itemEliminar.Id);
+
+                        newRelEntity.FlgActivo = 1;
+                        _context.OpRSocGerCli.Update(newRelEntity);
+                        _context.SaveChanges();
+                    }
+                       
+
+                 }
+                    
+
+                //}
+
+
+                if (!boolRegDup && !boolNewReg)
                     return new RespondSearchObject<DTOReasignar>()
                     {
                         Objeto = dto,

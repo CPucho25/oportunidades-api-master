@@ -722,7 +722,8 @@ namespace BF.Controllers
                         break;
                     //Gerente
                     case 3:
-                        listOportunidad = await _context.VWListarOportunidad.Where(o => o.FlgActivo == 1 && o.IdGerente == dto.IdGerente
+                        listOportunidad = await _context.VWListarOportunidad.Where(o => o.FlgActivo == 1 
+                                                                                        && o.IdGerente == dto.IdGerente
                                                                                         && dto.IdArea==o.IdArea
                                                                                         && (dto.IdPeriodo == 0 ? 1 == 1 : o.IdPeriodo == dto.IdPeriodo)
                                                                                         && (dto.IdEmpresa == 0 ? 1 == 1 : o.IdEmpresa == dto.IdEmpresa)
